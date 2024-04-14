@@ -1,32 +1,100 @@
-const express = require("express");
-const mysql = require("mysql");
-const cors = require("cors")
+const express = require('express');
+const cors = require('cors')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const db = require('./db/connection.js')
 
-const app = express ();
-
-app.use(express.json());
+const app = express()
+const port = 5500;
+app.use(express.json())
 app.use(cors());
 
-const db = mysql.createConnection({
-    user: "root",
-    host: "localhost",
-    password: "Mahsa7066",
-    database: "emu_gpt",
+
+
+//Registration Endpoint
+app.post('/register', async (req, res) => {
+    const { username, password, full_name, mobile } = req.body;
+
+    //Hash the Password
+    const hashedPassword = await bcrypt.hash(password, 10)
+    console.log(hashedPassword);
+
+    const sql = 'INSERT INTO users (username, password, full_name, mobile) VALUES (?, ?, ?, ?)';
+    db.query(sql, [username, hashedPassword,full_name,mobile ], (err, result) => {
+        if (err) {
+            console.log("Error In Registration: " + err)
+        } else {
+            res.json({ message: "Registration successful" });
+        }
+    })
 });
 
-app.post("/register", (req, res) => {
-    const username = req.body.username;
-    const password = req.body.password;
 
-    db.query(
-        "INSERT INTO users (username, password) VALUES (?,?)",
-    [username, password],
-    (err, result) => {
-    console.log(err);
+//Login Endpoint
+
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    //Check if username and password are present
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Username and Password are Required' });
     }
-    );
-    });
 
-app.listen(3001, () =>{
-    console.log("running server");
+    const sql = 'SELECT * FROM users WHERE username = ?';
+    db.query(sql, [username], async (err, result) => {
+        if (err || result.length === 0) {
+            console.log("Error Searching for username: " + err)
+            res.status(404).json({ message: "No username found" })
+        } else {
+            //compare hashed password
+            const match = await bcrypt.compare(password, result[0].password);
+            if (match) {
+                //create a jwt token
+                const token = jwt.sign({ userId: result[0].id }, 'my_secret_key', { expiresIn: '1h' });
+                res.json({ message: 'Login Successful', token })
+            } else {
+                res.status(401).json({ message: 'Invalid Password' })
+            }
+        }
+    })
 });
+
+
+//Authentication Middleware using JWT
+const authenticate = (req, res, next) => {
+    const token = req.header('Authorization');
+    console.log("Unextracted Token: " + token)
+
+    if (!token) {
+        return res.status(401).json({ message: "Unauthorized" })
+    }
+    const extractedToken = token.split(' ')[1];
+    console.log('Actual TOken: ' + extractedToken)
+
+    try {
+        // /verift and validate our token
+        const decoded = jwt.verify(extractedToken, 'my_secret_key')
+        req.userId = decoded.userId;
+        next();
+
+    } catch (err) {
+        res.status(401).json({ message: "Invalid Token" })
+    }
+}
+
+app.get('/chat', authenticate, (req, res)=>{
+    const userId = req.userId;
+    const sql = "SELECT * FROM users WHERE id = ?";
+    db.query(sql, [userId], (err, result)=>{
+        if (err || result.length === 0) {
+            res.status(500).json({message: "Error Fetching Details"})
+        }else{
+            res.json({full_name: result[0].full_name});
+        }
+        // console.log(result)
+    })
+});
+
+
+app.listen(port, ()=>{
+    console.log('Server is running 👻');
+})
