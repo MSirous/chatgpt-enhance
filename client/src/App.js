@@ -1,65 +1,40 @@
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
+// import { BrowserRouter } from 'react-router-dom'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import Home from './components/Home'
-// import Navbar from './components/Navbar'
-import Register from './components/auth/Register'
-import Login from './components/auth/Login'
-import Profile from './components/auth/Profile'
-import Chat from './components/auth/Chat'
+import Dashboard from "./Dashboard/Dashboard";
+
+
+import Home from './Home';
+import Register from './auth/Register'
+import Login from './auth/Login'
+
+import { connectWithSocketServer } from "./socketConnection/socketConn";
 import './App.css'
-
-import logo from './logo.svg';
-// import './main-js';
-// import './normalize.css';
-
-const App = () => {
-
-  const [loggedIn, setLoggedIn] = useState(false);
-
-  const authenticate = async() =>{
-
-  try{
-    const token = localStorage.getItem('token');
-    console.log(token);
-    if (token){
-      setLoggedIn(true);
-    }else{
-      setLoggedIn(false);
-    }
-
-  }catch(err){
-    console.log(err);
-    setLoggedIn(false);
-  }
-}
-  useEffect(()=>{
-    authenticate();
+function App() {
+  useEffect(() => {
+    connectWithSocketServer();
   }, []);
 
-const handleLogOut = () =>{
-  localStorage.removeItem('token');
-  setLoggedIn(false);
-}
+
 
   return (
-    <div className="App">
+   <div className="App">
       <header className="App-header">
         <BrowserRouter>
         {/* <Navbar loggedIn={loggedIn} handleLogOut={handleLogOut} /> */}
           <Routes>
-            <Route path='/' element={<Home/>}/>
+          <Route path='/' element={<Home/>}/>
             <Route path='/register' element={<Register/>}/>
             <Route path='/login' element={<Login/>}/>
-            <Route path='/profile' element={<Profile/>}/>
-            <Route path='/chat' element={<Chat/>}/>
             <Route path='/logout' element={<Navigate to= '/' />}/>
+          
+            <Route path='/dashboard' element={<Dashboard/>}/>
+           
           </Routes>
         </BrowserRouter>
       </header>
     </div>
-  )
+  );
 }
 
 export default App;
-
-

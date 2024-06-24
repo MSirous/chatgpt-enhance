@@ -25,7 +25,7 @@ const Register = () => {
     const handleSubmit = async(e) =>{
         e.preventDefault();
         try {
-            const response = await Axios.post('http://localhost:5500/register',formData );
+            const response = await Axios.post('http://localhost:9000/register',formData );
             console.log("Registration Successful")
             navigate('/login')
         } catch (error) {
@@ -33,6 +33,7 @@ const Register = () => {
         }
     }
 
+	
     return (
 	<div className="container">
 			<form onSubmit={handleSubmit} >

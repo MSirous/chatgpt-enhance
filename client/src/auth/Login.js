@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -21,16 +21,41 @@ const Login = () => {
         }))
     }
 
+    const [loggedIn, setLoggedIn] = useState(false);
 
+    const authenticate = async() =>{
+  
+    try{
+      const token = localStorage.getItem('token');
+      console.log(token);
+      if (token){
+        setLoggedIn(true);
+      }else{
+        setLoggedIn(false);
+      }
+  
+    }catch(err){
+      console.log(err);
+      setLoggedIn(false);
+    }
+  }
+    useEffect(()=>{
+      authenticate();
+    }, []);
+  
+  const handleLogOut = () =>{
+    localStorage.removeItem('token');
+    setLoggedIn(false);
+  }
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:5500/login', formData);
+            const response = await axios.post('http://localhost:9000/login', formData);
             const { token } = response.data;
             console.log("Login Token is: " + token)
             localStorage.setItem('token', token);
             setError('')
-            navigate('/chat')
+            navigate('/dashboard')
 
         } catch (error) {
             console.log("Login Failed: " + error)
@@ -43,8 +68,8 @@ const Login = () => {
 
 
 return (
+    <>
     <div className="container">
-      
  		<form className="login-page" onSubmit={handleSubmit}>
  			<h1>Sign in</h1>
  			{/* <div className="social-container">
@@ -68,6 +93,7 @@ return (
  		</form>
 
     </div>
+    </>
 )
 }
 export default Login;

@@ -6,7 +6,7 @@ const Home = () => {
         <div className="wrapper">
             <div className="left">
                 <div className="left-content">
-                <b1>hello,</b1> 
+                <b1>Hello,</b1> 
                 </div>
             <div className="left-context"> 
             Welcome to EMU AI,<br /><br />
